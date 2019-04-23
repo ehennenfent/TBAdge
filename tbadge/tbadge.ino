@@ -1,6 +1,11 @@
 #include "lib.c"
 #include <Adafruit_NeoPixel.h>
+#include <Adafruit_GFX.h>    // Core graphics library
+#include <Adafruit_ST7735.h> // Hardware-specific library for ST7735
+#include "Adafruit_miniTFTWing.h"
 
+Adafruit_miniTFTWing ss;
+Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
 byte program[MAX_PROGRAM] = {'+', '>', '+', '+', '>', '+', '+', '+', '>', '+', '+', '+', '+',
@@ -28,6 +33,13 @@ void render(byte * mem, byte * buf){
 
 void setup() {
   pixels.begin();
+
+  ss.tftReset();
+  ss.setBacklight(0x0); // fully on
+
+  tft.initR(INITR_MINI160x80);
+  tft.setRotation(3);
+
   reset();
 
   colors[0] = pixels.Color(0, 0, 0);
@@ -50,14 +62,15 @@ void loop() {
   reset();
 
   while(single_step()){
-    render(memory, memory + 32);
-    delay(250);
+    render(memory, buffer);
+    delay(500);
   }
 
   delay(1500);
 }
 
 bool single_step(){
+  draw_char(program[epointer]);
   switch(program[epointer]){
     case '>':
       if (mpointer != BYTE_MAX) mpointer++;
@@ -84,4 +97,12 @@ void reset(){
   mpointer = 0;
   epointer = 0;
   io_mode = 0;
+}
+
+void draw_char(byte c){
+  tft.fillScreen(ST77XX_WHITE);
+  tft.setCursor(60, 8);
+  tft.setTextColor(ST77XX_BLACK);
+  tft.setTextSize(9);
+  tft.println((char) c);
 }
