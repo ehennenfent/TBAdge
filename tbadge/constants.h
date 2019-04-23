@@ -9,3 +9,5 @@
 
 #define PIN       15
 #define NUMPIXELS MEMPIXELS + BUFPIXELS
+
+#define BYTE_MAX 255

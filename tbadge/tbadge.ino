@@ -3,12 +3,14 @@
 
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
-byte program[MAX_PROGRAM];
+byte program[MAX_PROGRAM] = {'+', '>', '+', '+', '>', '+', '+', '+', '>', '+', '+', '+', '+',
+                             '>', '+', '+', '+', '+', '+', '>', '+', '+', '+', '+', '+', '+'};
 byte memory[MEMORY_SIZE];
 byte buffer[BUFFER_SIZE];
 
 word mpointer;
 word epointer;
+byte io_mode;
 
 
 void render(byte * mem, byte * buf){
@@ -26,6 +28,7 @@ void render(byte * mem, byte * buf){
 
 void setup() {
   pixels.begin();
+  reset();
 
   colors[0] = pixels.Color(0, 0, 0);
   for (word i = 1; i < 256; i+= 7){
@@ -44,11 +47,41 @@ void setup() {
 
 void loop() {
   pixels.clear();
+  reset();
 
-  for (word i = 0; i < MEMORY_SIZE; i++){
-    memory[i] = i;
+  while(single_step()){
+    render(memory, memory + 32);
+    delay(250);
   }
-  render(memory, memory + 32);
 
-  delay(100);
+  delay(1500);
+}
+
+bool single_step(){
+  switch(program[epointer]){
+    case '>':
+      if (mpointer != BYTE_MAX) mpointer++;
+      break;
+    case '<':
+      if (mpointer != 0) mpointer--;
+      break;
+    case '+':
+      if (memory[mpointer] != BYTE_MAX) memory[mpointer]++;
+      break;
+    case '-':
+      if (memory[mpointer] != 0) memory[mpointer]--;
+      break;
+    default:
+      return false;
+  }
+
+  epointer++;
+  return true;
+}
+
+void reset(){
+  memset(memory, 0, MEMORY_SIZE);
+  mpointer = 0;
+  epointer = 0;
+  io_mode = 0;
 }
