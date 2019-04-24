@@ -33,6 +33,7 @@ void render(byte * mem, std::deque<byte> &buf){
 
 
 void setup() {
+  Serial.begin(9600);
   pixels.begin();
 
   ss.tftReset();
