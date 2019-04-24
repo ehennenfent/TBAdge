@@ -8,8 +8,8 @@ Adafruit_miniTFTWing ss;
 Adafruit_ST7735 tft = Adafruit_ST7735(TFT_CS,  TFT_DC, TFT_RST);
 Adafruit_NeoPixel pixels(NUMPIXELS, PIN, NEO_GRB + NEO_KHZ800);
 
-byte program[MAX_PROGRAM] = {'+', '>', '+', '+', '>', '+', '+', '+', '>', '+', '+', '+', '+',
-                             '>', '+', '+', '+', '+', '+', '>', '+', '+', '+', '+', '+', '+'};
+byte program[MAX_PROGRAM] = {'+', '+', '=', '+', '+', '+', '+', '+', '+', '[', '-', '>', '+', '+', 
+                             '+', '+', '+', '+', '+', '+', '<', ']', '>', '+', '?', '+', '?', '+', '?'};
 byte memory[MEMORY_SIZE];
 byte buffer[BUFFER_SIZE];
 
@@ -73,7 +73,7 @@ bool single_step(){
   draw_char(program[epointer]);
   switch(program[epointer]){
     case '>':
-      if (mpointer != BYTE_MAX) mpointer++;
+      if (mpointer != MEMORY_SIZE) mpointer++;
       break;
     case '<':
       if (mpointer != 0) mpointer--;
@@ -84,11 +84,48 @@ bool single_step(){
     case '-':
       if (memory[mpointer] != 0) memory[mpointer]--;
       break;
-    default:
+    case '[':
+      if (memory[mpointer] == 0){
+        word step = epointer + 1;
+        int num_rb_needed = 1;
+        while (step < MAX_PROGRAM){
+          step++;
+          if (program[step] == '[') num_rb_needed++;
+          if (program[step] == ']') num_rb_needed--;
+          if (num_rb_needed == 0) break;
+        }
+        epointer = step;
+      }
+      break;
+    case ']':
+      if (memory[mpointer] != 0){
+        word step = epointer;
+        int num_lb_needed = 1;
+        while (step > 0){
+          step--;
+          if (program[step] == ']') num_lb_needed++;
+          if (program[step] == '[') num_lb_needed--;
+          if (num_lb_needed == 0) break;
+        }
+        epointer = step;
+      }
+      break;
+    case '=':
+      io_mode = memory[mpointer];
+      break;
+    case '?':
+      do_io(io_mode);
+      break;
+    case '\x00':
       return false;
+    default:
+      break;
   }
 
   epointer++;
+  if (epointer == MAX_PROGRAM){
+    return false;
+  }
   return true;
 }
 
@@ -97,6 +134,13 @@ void reset(){
   mpointer = 0;
   epointer = 0;
   io_mode = 0;
+}
+
+void do_io(byte mode){
+  switch (mode){
+    case 2:
+      draw_char(memory[mpointer]);
+  }
 }
 
 void draw_char(byte c){
